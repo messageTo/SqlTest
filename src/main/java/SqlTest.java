@@ -18,7 +18,7 @@ public class SqlTest {
 
     public static void main(String[] args) throws Exception {
 //        需处理的sql
-        String sql = "SELECT COUNT(1) FROM CI_BSEG A, CI_SA B, CI_SA_TYPE C WHERE A.BILL_ID = ( SELECT DISTINCT DTL.BILL_ID FROM CM_SUBSIDY_DTL DTL WHERE DTL.SP_ID = ? AND DTL.REF_ID = (SELECT MAX(D.REF_ID) FROM CM_SUBSIDY_DTL D WHERE D.SP_ID = ? AND D.BSEG_ID NOT IN (SELECT E.BSEG_ID FROM CI_BSEG E WHERE E.BILL_ID = ?) AND EXISTS ( SELECT 'X' FROM CI_BSEG F WHERE F.BSEG_ID = D.BSEG_ID AND F.BSEG_STAT_FLG = '50' ) ) AND DTL.BSEG_ID NOT IN ( SELECT G.BSEG_ID FROM CI_BSEG G WHERE G.BILL_ID = ?) AND EXISTS ( SELECT 'X' FROM CI_BSEG H WHERE H.BSEG_ID = DTL.BSEG_ID AND H.BSEG_STAT_FLG = '50') ) AND EXISTS ( SELECT '1' FROM CI_BSEG X, CI_SA M, CI_SA_TYPE N WHERE A.BILL_ID = X.BILL_ID AND X.BSEG_STAT_FLG = '50' AND M.SA_ID = X.SA_ID AND N.SA_TYPE_CD = M.SA_TYPE_CD AND N.SVC_TYPE_CD IN ('W', 'S', 'F') ) AND EXISTS ( SELECT '1' FROM CI_BSEG Y, CI_SA O, CI_SA_TYPE P WHERE A.BILL_ID = Y.BILL_ID AND Y.BSEG_STAT_FLG = '60' AND O.SA_ID = Y.SA_ID AND P.SA_TYPE_CD = O.SA_TYPE_CD AND P.SVC_TYPE_CD IN ('W', 'S', 'F') ) AND A.SA_ID = B.SA_ID AND B.SA_TYPE_CD = C.SA_TYPE_CD AND C.SVC_TYPE_CD IN ('W', 'S', 'F')";
+        String sql = "SELECT DESCR FROM CI_SP_TYPE_L WHERE SP_TYPE_CD = ? AND LANGUAGE_CD = ?";
 //        表对应关系Excel
         String tablePath = "C:\\Users\\user\\Desktop\\Database_Script_Record.xlsx";
 //        字段对应关系Excel
@@ -56,10 +56,16 @@ public class SqlTest {
 //        表
         for (TableStat.Name name : visitor.getTables().keySet()) {
             String newTableName = tableMapping.get(name.getName());
-            String dealnewTableName = CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, newTableName);
+            try{
+                String dealnewTableName = CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, newTableName);
 //            表名前后有空白
-            replaceMap.put(" "+name.getName()+" "," "+newTableName+" ");
-            dealReplaceMap.put(" "+name.getName()+" "," "+dealnewTableName+" ");
+                replaceMap.put(" "+name.getName()+" "," "+newTableName+" ");
+                dealReplaceMap.put(" "+name.getName()+" "," "+dealnewTableName+" ");
+            }catch (Exception e){
+//                e.printStackTrace();
+                print("新表找不到："+name.getName()+"--"+newTableName);
+            }
+
         }
 //       字段
         Map<String,String> newreplaceTable = new HashMap<String, String>();
@@ -67,10 +73,16 @@ public class SqlTest {
         Map<String,String> replaceColumnMap = new HashMap<String,String>();
         for (TableStat.Column column : visitor.getColumns()) {
             String newTableName = tableMapping.get(column.getTable());
-            String newColumn = mapping.get(column.getTable()).get(newTableName).get(column.getName());
-            String dealNewColumn = CaseFormat.LOWER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, newColumn);   //驼峰命名
-            replaceColumnMap.put(column.getName(),newColumn);
-            newreplaceTable.put(column.getName(),dealNewColumn);
+            try{
+                String newColumn = mapping.get(column.getTable()).get(newTableName).get(column.getName());
+                String dealNewColumn = CaseFormat.LOWER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, newColumn);   //驼峰命名
+                replaceColumnMap.put(column.getName(),newColumn);
+                newreplaceTable.put(column.getName(),dealNewColumn);
+            }catch (Exception e){
+//                e.printStackTrace();
+                print("新表找不到："+column.getTable()+"--"+newTableName);
+            }
+
         }
         print("-------------替换表--------------------");
         print(replaceMap);
